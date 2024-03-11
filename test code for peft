@@ -5,37 +5,31 @@ class DialogueSummarizer:
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    def generate_summary(self, test_dialogue):
-        # Concatenate dialogues into a single string
-        input_text = "\n".join(test_dialogue)
-
-        # Tokenize input text
-        input_ids = self.tokenizer(input_text, return_tensors="pt").input_ids
-
-        # Generate summary
-        output = self.model.generate(input_ids, max_length=150, num_beams=4, early_stopping=True)
-
-        # Decode generated summary
+    def generate_summary(self, dialogues):
+        dialogue_string = "\n".join(dialogues)
+        prompt = f"Summarize the following conversation.\n\n{dialogue_string}\n\nSummary:"
+        inputs = self.tokenizer(prompt, return_tensors='pt')
+        output = self.model.generate(inputs["input_ids"], max_length=150, num_beams=4, early_stopping=True)
         summary = self.tokenizer.decode(output[0], skip_special_tokens=True)
         return summary
 
-# Example usage
-if __name__ == "__main__":
-    # Instantiate DialogueSummarizer with the model path
-    model_path = "C:/Users/saket.singh1/Downloads/FINE_TUNED_MODEL_WITH_PEFT"
-    summarizer = DialogueSummarizer(model_path)
+# Test the class with the provided test dialogues
+test_dialogues = [
+    "Agent: Hi there! How can I help you today?",
+    "User: Hello, I placed an order yesterday for a new phone case. Can you give me an update on the delivery?",
+    "Agent: Sure, let me check. Your order (ID: 12345) is currently being processed and is expected to be shipped within 2 business days.",
+    "User: Great, thanks for letting me know! Do you have a tracking number for the shipment yet?",
+    "Agent: Unfortunately, a tracking number won't be available until your order is shipped. You'll receive an email notification with the tracking information once it's on its way."
+]
 
-    # Test dialogues
-    test_dialogue = [
-        "Agent: Hi there! How can I help you today?",
-        "User: Hello, I placed an order yesterday for a new phone case. Can you give me an update on the delivery?",
-        "Agent: Sure, let me check. Your order (ID: 12345) is currently being processed and is expected to be shipped within 2 business days.",
-        "User: Great, thanks for letting me know! Do you have a tracking number for the shipment yet?",
-        "Agent: Unfortunately, a tracking number won't be available until your order is shipped. You'll receive an email notification with the tracking information once it's on its way."
-    ]
+# Path to the fine-tuned PEFT model directory
+peft_model_path = "C:/Users/saket.singh1/Downloads/FINE_TUNED_MODEL_WITH_PEFT"
 
-    # Generate summary for test dialogues
-    generated_summary = summarizer.generate_summary(test_dialogue)
+# Instantiate the DialogueSummarizer class with the model path
+summarizer = DialogueSummarizer(peft_model_path)
 
-    # Print generated summary
-    print("Generated Summary:", generated_summary)
+# Generate summary for the test dialogues
+generated_summary = summarizer.generate_summary(test_dialogues)
+
+print("Generated Summary:")
+print(generated_summary)
